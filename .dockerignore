@@ -1,0 +1,6 @@
+.git
+.github
+*.md
+deploy
+scripts
+*_test.go

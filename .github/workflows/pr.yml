@@ -1,0 +1,55 @@
+name: pr
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  go:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: gofmt
+        run: test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
+      - name: vet
+        run: go vet ./...
+      - name: test
+        run: go test ./... -count=1
+      - name: govulncheck
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.1.4 ./...
+      - name: deploy/base renders and follows the platform contract
+        run: |
+          out="$(kubectl kustomize deploy/base)"
+          grep -q 'serviceAccountName: orders' <<<"$out"
+          grep -q 'idp.ithaca-idp.com/workload: orders' <<<"$out"
+          grep -q 'type: ClusterIP' <<<"$out"
+          if grep -qE 'kind: (Role|ClusterRole|RoleBinding|ClusterRoleBinding|Secret|HTTPRoute|NetworkPolicy|ServiceAccount)$' <<<"$out"; then
+            echo "deploy/base may only contain a Deployment and a Service (the platform owns the rest)" >&2; exit 1
+          fi
+
+  workflow-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
+        with:
+          advanced-security: false

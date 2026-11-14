@@ -1,0 +1,12 @@
+# Named like the workload and on port 80: the platform HTTPRoute of WorkloadIdentity `orders` sends traffic to Service
+# `orders` port 80 (idp-portal #45). ClusterIP only: the tenant Services policy refuses everything else.
+apiVersion: v1
+kind: Service
+metadata:
+  name: orders
+  labels: {app: orders}
+spec:
+  type: ClusterIP
+  selector: {app: orders}
+  ports:
+    - {name: http, port: 80, targetPort: http}
