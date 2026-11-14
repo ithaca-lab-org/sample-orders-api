@@ -1,7 +1,7 @@
 # Platform contract (idp-infra ADR 0009, ADR 0011): the workload `orders` is ordered on the portal Workloads page, which
 # creates ServiceAccount `orders`; the pod must run as that ServiceAccount and carry the label below (the ambient
 # AuthorizationPolicy, the Vault role and the IAM principal all key on it), and Spinnaker's admission policy refuses a
-# Deployment where the two differ. The image is named by DIGEST: CI prints it, paste it here and commit.
+# Deployment where the two differ. The image is named by DIGEST: CI prints it (job summary of the image workflow), paste it here and commit.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -23,7 +23,7 @@ spec:
         seccompProfile: {type: RuntimeDefault}
       containers:
         - name: orders
-          image: ghcr.io/ithaca-lab-org/sample-orders-api@sha256:REPLACE_WITH_DIGEST_FROM_CI
+          image: ghcr.io/ithaca-lab-org/sample-orders-api@sha256:715f2adf1597b5deb5ec40c55c9893863d9107066d05267ee4a439964e59a7ec
           ports:
             - {name: http, containerPort: 8080}
           # Keys of the portal secret `orders-config` (Secrets page): ORDERS_API_KEY and ORDERS_GREETING.
